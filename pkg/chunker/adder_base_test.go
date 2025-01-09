@@ -2,6 +2,8 @@ package chunker
 
 import (
 	"context"
+	"github.com/Xib1uvXi/ipfsrepo/pkg/fsrepo"
+	"github.com/dustin/go-humanize"
 	"github.com/ipfs/boxo/blockservice"
 	"github.com/ipfs/boxo/blockstore"
 	"github.com/ipfs/boxo/exchange/offline"
@@ -15,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 // createFile0to100k creates a file with the number 0 to 100k
@@ -116,4 +119,82 @@ func TestNewAdderBase3(t *testing.T) {
 	t.Logf("size: %v", result.FileSizeBytes)
 	t.Logf("size: %v", result.FileHumanSize)
 	t.Logf("blocks: %v", len(result.Blocks))
+}
+
+func TestNewAdderBase4_RealWorld_4G_1MiB(t *testing.T) {
+	t.Skip("local test")
+	tmpRoot := t.TempDir()
+	repo, err := fsrepo.NewFSRepo(tmpRoot)
+	require.NoError(t, err)
+	defer repo.Close()
+
+	bs := blockstore.NewBlockstore(repo.Datastore(), blockstore.WriteThrough(true))
+	//bs := blockstore.NewBlockstore(repo.Datastore())
+	bsrv := blockservice.New(bs, offline.Exchange(bs))
+	dsrv := merkledag.NewDAGService(bsrv)
+
+	ctx := context.Background()
+	ab := NewAdderBase(ctx, dsrv, Chunk1MiB)
+
+	_, err = opzRun(ab, "~/Downloads/chunkdata/chunk_testdata_4G.tar.gz", t)
+	require.NoError(t, err)
+}
+
+func TestNewAdderBase4_RealWorld_49G_1MiB(t *testing.T) {
+	t.Skip("local test")
+	tmpRoot := t.TempDir()
+	repo, err := fsrepo.NewFSRepo(tmpRoot)
+	require.NoError(t, err)
+	defer repo.Close()
+
+	bs := blockstore.NewBlockstore(repo.Datastore(), blockstore.WriteThrough(true))
+	bsrv := blockservice.New(bs, offline.Exchange(bs))
+	dsrv := merkledag.NewDAGService(bsrv)
+
+	ctx := context.Background()
+	ab := NewAdderBase(ctx, dsrv, Chunk1MiB)
+
+	_, err = opzRun(ab, "~/Downloads/chunkdata/chunk_testdata_49G.tar.gz", t)
+	require.NoError(t, err)
+}
+
+func TestNewAdderBase4_RealWorld_49G_10MiB(t *testing.T) {
+	t.Skip("local test")
+	tmpRoot := t.TempDir()
+	repo, err := fsrepo.NewFSRepo(tmpRoot)
+	require.NoError(t, err)
+	defer repo.Close()
+
+	bs := blockstore.NewBlockstore(repo.Datastore(), blockstore.WriteThrough(true))
+	bsrv := blockservice.New(bs, offline.Exchange(bs))
+	dsrv := merkledag.NewDAGService(bsrv)
+
+	ctx := context.Background()
+	ab := NewAdderBase(ctx, dsrv, Chunk10MiB)
+
+	_, err = opzRun(ab, "~/Downloads/chunkdata/chunk_testdata_49G.tar.gz", t)
+	require.NoError(t, err)
+}
+
+func opzRun(adder *AdderBase, path string, t *testing.T) (*Result, error) {
+	now := time.Now()
+
+	result, err := adder.Add(path)
+	if err != nil {
+		return nil, err
+	}
+
+	spend := time.Since(now).Seconds()
+	speed := float64(result.FileSizeBytes) / spend
+
+	t.Logf("perf: %v/s", humanize.Bytes(uint64(speed)))
+
+	t.Logf("filename: %s", result.FileName)
+	t.Logf("rootCid: %s", result.RootCid)
+	t.Logf("chunk size: %v", result.ChunkSize)
+	t.Logf("size: %v", result.FileSizeBytes)
+	t.Logf("size: %v", result.FileHumanSize)
+	t.Logf("blocks: %v", len(result.Blocks))
+
+	return result, nil
 }

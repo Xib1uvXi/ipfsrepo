@@ -34,6 +34,11 @@ type FSRepo struct {
 }
 
 func NewFSRepo(repoPath string) (*FSRepo, error) {
+
+	if err := Init(repoPath); err != nil {
+		return nil, err
+	}
+
 	reposrv, err := open(repoPath)
 	if err != nil {
 		return nil, err
