@@ -17,6 +17,12 @@ import (
 
 const LockFile = "hificloud.repo.lock"
 
+type Storage interface {
+	Datastore() Datastore
+	GetStorageUsage(ctx context.Context) (uint64, error)
+	Close() error
+}
+
 type FSRepo struct {
 	locker sync.Mutex
 

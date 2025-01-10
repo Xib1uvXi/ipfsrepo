@@ -86,7 +86,7 @@ func (s *AdderBase) Add(targetPath string) (*Result, error) {
 		FileName:      filename,
 		FileSizeBytes: fsize,
 		FileHumanSize: hSize,
-		ChunkSize:     humanize.Bytes(uint64(s.chunkSize)),
+		ChunkSize:     GetChunkSize(int(s.chunkSize)),
 		RootCid:       nd.Cid().String(),
 		Blocks:        links,
 	}, nil
