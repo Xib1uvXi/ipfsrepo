@@ -63,6 +63,10 @@ type Repo struct {
 	*BlockRepo
 }
 
+func (r *Repo) BlockStore() blockstore.Blockstore {
+	return r.blockStore
+}
+
 // FromPath creates a new repo from the given path
 func FromPath(uuid string, repoPath string, maxStorage uint64, opts ...RepoOption) (*Repo, error) {
 	storage, err := fsrepo.NewFSRepo(repoPath)
