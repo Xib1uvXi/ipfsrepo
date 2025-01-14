@@ -67,6 +67,10 @@ func (r *Repo) BlockStore() blockstore.Blockstore {
 	return r.blockStore
 }
 
+func (r *Repo) DataStore() fsrepo.Datastore {
+	return r.storage.Datastore()
+}
+
 // FromPath creates a new repo from the given path
 func FromPath(uuid string, repoPath string, maxStorage uint64, opts ...RepoOption) (*Repo, error) {
 	storage, err := fsrepo.NewFSRepo(repoPath)
