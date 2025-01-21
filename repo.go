@@ -38,7 +38,7 @@ func SetBlockStore(blockOpts ...blockstore.Option) RepoOption {
 
 func SetChunkSize(chunkSize int64) RepoOption {
 	return func(r *Repo) error {
-		r.importer = NewImporter(r.blockStore, chunkSize)
+		r.chunkSize = chunkSize
 		return nil
 	}
 }
@@ -58,6 +58,7 @@ type Repo struct {
 	blockDevice *lsblk.BlockDevice
 	storage     fsrepo.Storage
 	blockStore  blockstore.Blockstore
+	chunkSize   int64
 	importer    *Importer
 	*StorageUsage
 	*BlockRepo
@@ -98,8 +99,10 @@ func FromPath(uuid string, repoPath string, maxStorage uint64, opts ...RepoOptio
 		r.blockStore = blockstore.NewBlockstore(storage.Datastore(), blockstore.WriteThrough(true))
 	}
 
-	if r.importer == nil {
+	if r.chunkSize == 0 {
 		r.importer = NewImporter(r.blockStore, chunker.Chunk1MiB)
+	} else {
+		r.importer = NewImporter(r.blockStore, r.chunkSize)
 	}
 
 	r.StorageUsage.Start()
